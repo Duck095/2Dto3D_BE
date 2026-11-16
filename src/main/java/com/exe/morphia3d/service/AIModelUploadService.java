@@ -33,7 +33,7 @@ public class AIModelUploadService {
                                 MultipartFile modelFile) {
         validateMetadata(principal, metadata);
         List<ValidatedMedia> validatedImages = validation.validateImages(imageFiles);
-        ValidatedMedia validatedModel = validation.validateGlb(modelFile);
+        ValidatedMedia validatedModel = validation.validateModel(modelFile);
 
         List<ValidatedMedia> orderedMedia = new ArrayList<>(validatedImages.size() + 1);
         orderedMedia.add(validatedModel);

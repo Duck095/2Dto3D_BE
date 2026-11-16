@@ -58,53 +58,67 @@ public class MediaValidationService {
         return List.copyOf(validated);
     }
 
-    public ValidatedMedia validateGlb(MultipartFile file) {
+    public ValidatedMedia validateModel(MultipartFile file) {
         requirePresent(file);
         if (file.getSize() > properties.getModelMaxBytes()) {
             throw new MediaValidationException(TOO_LARGE);
         }
-        if (!"glb".equals(extension(file.getOriginalFilename()))) {
+
+        String ext = extension(file.getOriginalFilename());
+        if (!"glb".equals(ext) && !"stl".equals(ext)) {
             throw new MediaValidationException(UNSUPPORTED_EXTENSION);
         }
 
         String mimeType = normalizedMimeType(file.getContentType());
-        if (!GLB_MIME_TYPE.equals(mimeType) && !GENERIC_BINARY_MIME_TYPE.equals(mimeType)) {
-            throw new MediaValidationException(UNSUPPORTED_MIME_TYPE);
-        }
-        if (file.getSize() < GLB_HEADER_BYTES) {
-            throw new MediaValidationException(INVALID_GLB);
-        }
-
-        try (InputStream input = file.getInputStream()) {
-            byte[] header = input.readNBytes(GLB_HEADER_BYTES);
-            if (header.length != GLB_HEADER_BYTES
-                    || header[0] != 'g' || header[1] != 'l' || header[2] != 'T' || header[3] != 'F') {
+        if ("glb".equals(ext)) {
+            if (!GLB_MIME_TYPE.equals(mimeType) && !GENERIC_BINARY_MIME_TYPE.equals(mimeType)) {
+                throw new MediaValidationException(UNSUPPORTED_MIME_TYPE);
+            }
+            if (file.getSize() < GLB_HEADER_BYTES) {
                 throw new MediaValidationException(INVALID_GLB);
             }
 
-            long version = unsignedLittleEndianInt(header, 4);
-            long declaredLength = unsignedLittleEndianInt(header, 8);
-            if (version != 2) {
-                throw new MediaValidationException(INVALID_GLB);
-            }
-
-            long actualLength = header.length;
-            byte[] buffer = new byte[8192];
-            int read;
-            while ((read = input.read(buffer)) != -1) {
-                actualLength += read;
-                if (actualLength > properties.getModelMaxBytes()) {
-                    throw new MediaValidationException(TOO_LARGE);
+            try (InputStream input = file.getInputStream()) {
+                byte[] header = input.readNBytes(GLB_HEADER_BYTES);
+                if (header.length != GLB_HEADER_BYTES
+                        || header[0] != 'g' || header[1] != 'l' || header[2] != 'T' || header[3] != 'F') {
+                    throw new MediaValidationException(INVALID_GLB);
                 }
-            }
-            if (declaredLength != actualLength || file.getSize() != actualLength) {
-                throw new MediaValidationException(INVALID_GLB);
-            }
-        } catch (IOException exception) {
-            throw new MediaValidationException(INVALID_GLB, exception);
-        }
 
-        return new ValidatedMedia(file, MediaKind.MODEL_3D, "glb", file.getSize(), null, null);
+                long version = unsignedLittleEndianInt(header, 4);
+                long declaredLength = unsignedLittleEndianInt(header, 8);
+                if (version != 2) {
+                    throw new MediaValidationException(INVALID_GLB);
+                }
+
+                long actualLength = header.length;
+                byte[] buffer = new byte[8192];
+                int read;
+                while ((read = input.read(buffer)) != -1) {
+                    actualLength += read;
+                    if (actualLength > properties.getModelMaxBytes()) {
+                        throw new MediaValidationException(TOO_LARGE);
+                    }
+                }
+                if (declaredLength != actualLength || file.getSize() != actualLength) {
+                    throw new MediaValidationException(INVALID_GLB);
+                }
+            } catch (IOException exception) {
+                throw new MediaValidationException(INVALID_GLB, exception);
+            }
+
+            return new ValidatedMedia(file, MediaKind.MODEL_3D, "glb", file.getSize(), null, null);
+        } else {
+            // .stl: binary hoặc text, chỉ kiểm tra extension, size và mime type phổ biến
+            if (!GENERIC_BINARY_MIME_TYPE.equals(mimeType)
+                    && !"application/sla".equals(mimeType)
+                    && !"text/plain".equals(mimeType)
+                    && mimeType.isEmpty() == false) {
+                throw new MediaValidationException(UNSUPPORTED_MIME_TYPE);
+            }
+
+            return new ValidatedMedia(file, MediaKind.MODEL_3D, "stl", file.getSize(), null, null);
+        }
     }
 
     private ValidatedMedia validateImage(MultipartFile file) {

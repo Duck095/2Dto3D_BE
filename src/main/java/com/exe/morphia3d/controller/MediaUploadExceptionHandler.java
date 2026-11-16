@@ -27,7 +27,7 @@ public class MediaUploadExceptionHandler {
         };
         String message = switch (status) {
             case PAYLOAD_TOO_LARGE -> "The upload exceeds the configured size or image limits";
-            case UNSUPPORTED_MEDIA_TYPE -> "Only supported JPEG, PNG, WebP, and GLB content is accepted";
+            case UNSUPPORTED_MEDIA_TYPE -> "Only supported JPEG, PNG, WebP, GLB, and STL content is accepted";
             default -> "The upload request or a required file is invalid";
         };
         return response(status, message);

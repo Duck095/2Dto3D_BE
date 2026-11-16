@@ -87,7 +87,7 @@ public class DesignerModelPersistenceService {
 
         MediaAsset modelAsset = byId.get(operation.mediaAssetIds().get(0));
         if (modelAsset == null || modelAsset.getMediaKind() != MediaKind.MODEL_3D) {
-            throw new IllegalStateException("The first operation asset must be its GLB model");
+            throw new IllegalStateException("The first operation asset must be its GLB or STL model");
         }
         List<Long> imageAssetIds = operation.mediaAssetIds().subList(1, operation.mediaAssetIds().size());
         List<MediaAsset> imageAssets = imageAssetIds.stream().map(byId::get).toList();

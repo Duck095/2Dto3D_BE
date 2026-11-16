@@ -87,7 +87,7 @@ public class AIModelPersistenceService {
 
         MediaAsset modelAsset = byId.get(operation.mediaAssetIds().get(0));
         if (modelAsset == null || modelAsset.getMediaKind() != MediaKind.MODEL_3D) {
-            throw new IllegalStateException("The first AI operation asset must be its GLB model");
+            throw new IllegalStateException("The first AI operation asset must be its GLB or STL model");
         }
         List<MediaAsset> imageAssets = operation.mediaAssetIds().subList(1, operation.mediaAssetIds().size())
                 .stream().map(byId::get).toList();

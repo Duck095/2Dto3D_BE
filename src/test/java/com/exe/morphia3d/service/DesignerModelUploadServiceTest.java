@@ -87,7 +87,7 @@ class DesignerModelUploadServiceTest {
 
         when(validation.validateImages(images)).thenReturn(List.of(validatedImage,
                 new ValidatedMedia(images.get(1), MediaKind.IMAGE, "webp", 1, 2, 2)));
-        when(validation.validateGlb(model)).thenReturn(validatedModel);
+        when(validation.validateModel(model)).thenReturn(validatedModel);
         when(lifecycle.createUploadIntents(any(), anyList())).thenReturn(operation);
         when(lifecycle.claimUpload(operation, 101L)).thenReturn(modelIntent);
         when(lifecycle.claimUpload(operation, 102L)).thenReturn(firstImageIntent);
@@ -105,7 +105,7 @@ class DesignerModelUploadServiceTest {
 
     @Test
     void validatesAllFilesBeforeFirstUpload() {
-        when(validation.validateGlb(model)).thenThrow(new MediaValidationException(
+        when(validation.validateModel(model)).thenThrow(new MediaValidationException(
                 MediaValidationException.Reason.INVALID_GLB));
 
         assertThatThrownBy(() -> service.create(principal, metadata, images, model))
@@ -124,7 +124,7 @@ class DesignerModelUploadServiceTest {
 
         var order = inOrder(validation, lifecycle, storage, heartbeat, persistence);
         order.verify(validation).validateImages(images);
-        order.verify(validation).validateGlb(model);
+        order.verify(validation).validateModel(model);
         order.verify(lifecycle).createUploadIntents(any(), anyList());
         order.verify(storage).upload(modelIntent, validatedModel);
         order.verify(lifecycle).recordUpload(modelIntent, modelResult);

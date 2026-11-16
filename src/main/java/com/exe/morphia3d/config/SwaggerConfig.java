@@ -17,8 +17,8 @@ public class SwaggerConfig {
     public OpenAPI openAPI() {
         return new OpenAPI()
                 .info(new Info()
-                        .title("Cinema Management System API")
-                        .description("REST API for Cinema Management System")
+                        .title("Morphia 3D API")
+                        .description("REST API for Morphia 3D Backend")
                         .version("1.0.0")
                         .contact(new Contact()
                                 .name("SWD392 Team")

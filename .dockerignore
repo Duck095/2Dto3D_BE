@@ -1,0 +1,53 @@
+# Git & CI
+.git/
+.github/
+.gitignore
+
+# IDE
+.idea/
+.vscode/
+*.iml
+.run/
+
+# Build output (tùy chỉnh trong pom.xml: .mvn-target, cũng bỏ qua target mặc định)
+.mvn-target/
+target/
+*.class
+
+# Maven wrapper cache (được tạo lại trong Docker build)
+.m2/
+
+# Environment & secrets (không bao giờ commit vào image)
+.env
+.env.*
+!.env.example
+secrets/
+credentials/
+**/secrets.*
+**/credentials.*
+**/*.secret
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Docs & scripts chỉ dùng dev local (trừ mvnw cần cho Docker build)
+docs/
+tests/
+*.md
+HELP.md
+*.sh
+
+
+# Uploads & logs runtime
+uploads/
+*.log
+*.dump
+*.bak
+*.backup
+*.sqlite
+*.db
+
+# OS
+.DS_Store
+Thumbs.db

@@ -1,0 +1,29 @@
+# =====================================================================
+# Morphia 3D Backend — Docker Compose (chỉ backend)
+#
+# CSDL PostgreSQL đã chạy sẵn trên Railway, nên không chứa service db.
+# Cách chạy:
+#   1. Sao chép .env.example sang .env và điền giá trị thật
+#   2. Đảm bảo DB_URL trỏ đến PostgreSQL trên Railway
+#   3. docker compose up -d
+# =====================================================================
+
+services:
+  backend:
+    image: morphia-3d-be:0.0.1-SNAPSHOT
+    container_name: morphia-3d-be
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env
+    environment:
+      # DB_URL phải trỏ đến PostgreSQL trên Railway (lấy từ Railway Dashboard)
+      # VD: jdbc:postgresql://xxx.railway.app:5432/railway
+      DB_URL: ${DB_URL}
+    networks:
+      - morphia3d-net
+
+networks:
+  morphia3d-net:
+    driver: bridge

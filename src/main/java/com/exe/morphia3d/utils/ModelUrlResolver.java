@@ -17,8 +17,6 @@ public class ModelUrlResolver {
         if (path.startsWith("http"))
             return path;
 
-        return baseUrl.replace("/image/upload", "/raw/upload")
-                + "/"
-                + path;
+        return baseUrl + "/" + path;
     }
 }

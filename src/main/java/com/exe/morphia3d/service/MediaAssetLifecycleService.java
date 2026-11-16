@@ -512,8 +512,10 @@ public class MediaAssetLifecycleService {
     }
 
     private boolean validFormat(MediaKind kind, String format) {
-        return kind == MediaKind.MODEL_3D ? "glb".equals(format)
-                : List.of("jpeg", "png", "webp").contains(format);
+        if (kind == MediaKind.MODEL_3D) {
+            return "glb".equals(format) || "stl".equals(format);
+        }
+        return List.of("jpeg", "png", "webp").contains(format);
     }
 
     private String normalizeFormat(String value) {
@@ -525,7 +527,7 @@ public class MediaAssetLifecycleService {
     }
 
     private String resourceType(MediaKind kind) {
-        return kind == MediaKind.IMAGE ? "image" : "raw";
+        return "image";
     }
 
     private String cloudName() {

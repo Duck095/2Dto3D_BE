@@ -98,7 +98,7 @@ class MediaValidationServiceTest {
     void acceptsValidGlbHeader() {
         MockMultipartFile glb = glb("chair.glb", "model/gltf-binary", "glTF", 2, 12);
 
-        ValidatedMedia media = validator.validateGlb(glb);
+        ValidatedMedia media = validator.validateModel(glb);
 
         assertThat(media.mediaKind()).isEqualTo(MediaKind.MODEL_3D);
         assertThat(media.format()).isEqualTo("glb");
@@ -134,9 +134,9 @@ class MediaValidationServiceTest {
         MockMultipartFile stl = new MockMultipartFile("model", "chair.stl", "model/stl", new byte[12]);
         MockMultipartFile wrongMime = glb("chair.glb", "model/stl", "glTF", 2, 12);
 
-        assertThatThrownBy(() -> validator.validateGlb(stl))
+        assertThatThrownBy(() -> validator.validateModel(stl))
                 .isInstanceOf(MediaValidationException.class);
-        assertThatThrownBy(() -> validator.validateGlb(wrongMime))
+        assertThatThrownBy(() -> validator.validateModel(wrongMime))
                 .isInstanceOf(MediaValidationException.class);
     }
 
@@ -157,11 +157,11 @@ class MediaValidationServiceTest {
             }
         };
 
-        assertThat(validator.validateGlb(glb).byteCount()).isEqualTo(12);
+        assertThat(validator.validateModel(glb).byteCount()).isEqualTo(12);
     }
 
     private void assertRejectedGlb(MockMultipartFile glb) {
-        assertThatThrownBy(() -> validator.validateGlb(glb))
+        assertThatThrownBy(() -> validator.validateModel(glb))
                 .isInstanceOf(MediaValidationException.class);
     }
 

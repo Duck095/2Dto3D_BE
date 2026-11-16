@@ -207,10 +207,13 @@ public class CloudinaryMediaStorageService implements MediaStorageService {
 
         String assetId = segments[3];
         if (kind == MediaKind.MODEL_3D) {
-            if (!assetId.endsWith(".glb")) {
+            if (assetId.endsWith(".glb")) {
+                assetId = assetId.substring(0, assetId.length() - ".glb".length());
+            } else if (assetId.endsWith(".stl")) {
+                assetId = assetId.substring(0, assetId.length() - ".stl".length());
+            } else {
                 return false;
             }
-            assetId = assetId.substring(0, assetId.length() - ".glb".length());
         } else if (assetId.contains(".")) {
             return false;
         }
@@ -226,9 +229,10 @@ public class CloudinaryMediaStorageService implements MediaStorageService {
             return false;
         }
         String normalized = normalizeFormat(format);
-        return kind == MediaKind.MODEL_3D
-                ? "glb".equals(normalized)
-                : "jpeg".equals(normalized) || "png".equals(normalized) || "webp".equals(normalized);
+        if (kind == MediaKind.MODEL_3D) {
+            return "glb".equals(normalized) || "stl".equals(normalized);
+        }
+        return "jpeg".equals(normalized) || "png".equals(normalized) || "webp".equals(normalized);
     }
 
     private boolean formatsMatch(String expected, String returned, MediaKind kind) {
@@ -244,7 +248,7 @@ public class CloudinaryMediaStorageService implements MediaStorageService {
     }
 
     private String expectedResourceType(MediaKind kind) {
-        return kind == MediaKind.IMAGE ? "image" : "raw";
+        return "image";
     }
 
     private boolean isSupportedDeliveryType(String type) {

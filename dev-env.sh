@@ -57,8 +57,8 @@ validate_local_database_config() {
         return 1
     fi
 
-    if [[ ! "$DB_URL" =~ ^jdbc:postgresql://(localhost|127\.0\.0\.1|\[::1\])(:[0-9]{1,5})?/ ]]; then
-        printf 'DB_URL must point to a loopback PostgreSQL host for local development; its value is not displayed.\n' >&2
+    if [[ ! "$DB_URL" =~ ^jdbc:postgresql:// ]]; then
+        printf 'DB_URL must be a JDBC PostgreSQL URL (local or remote, e.g. Railway).\n' >&2
         return 1
     fi
 
