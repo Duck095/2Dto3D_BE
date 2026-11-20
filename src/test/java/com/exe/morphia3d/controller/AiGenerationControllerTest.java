@@ -35,7 +35,7 @@ class AiGenerationControllerTest {
     @Test
     void acceptsCreateOnlyThroughServiceAndReturnsPendingJob() {
         UserPrincipal owner = owner();
-        CreateAiGenerationRequest request = new CreateAiGenerationRequest("a lamp", "standard", "modern", "text");
+        CreateAiGenerationRequest request = new CreateAiGenerationRequest("a lamp", "modern", "text");
         UUID id = UUID.randomUUID();
         AiGenerationJobResponse expected = response(id, AiGenerationStatus.PENDING);
         when(jobs.create(eq(owner), eq(request), eq(null), eq("idem-1"))).thenReturn(expected);

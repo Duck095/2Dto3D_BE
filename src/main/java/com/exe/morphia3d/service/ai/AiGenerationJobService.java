@@ -53,7 +53,6 @@ public class AiGenerationJobService {
         Integer ownerId = requireOwner(principal);
         idempotencyKey = idempotencyKey == null ? null : idempotencyKey.trim();
         validateRequest(request, image, idempotencyKey);
-        requireReady();
         byte[] imageBytes = readImage(image);
         String hash = requestHash(request, imageBytes);
 
@@ -61,11 +60,12 @@ public class AiGenerationJobService {
             var existing = jobs.findByUser_IdAndIdempotencyKey(ownerId, idempotencyKey);
             if (existing.isPresent()) {
                 AiGenerationJob prior = existing.get();
-                if (!prior.getRequestHash().equals(hash)) {
+                if (!matchesCreateReplay(prior, request, imageBytes, hash)) {
                     throw new AiGenerationException("AI_IDEMPOTENCY_CONFLICT");
                 }
                 return toResponse(prior);
             }
+            requireReady();
             checkAndRecordRateLimit(ownerId);
         }
 
@@ -84,7 +84,7 @@ public class AiGenerationJobService {
                     .requestHash(hash)
                     .prompt(request.prompt().trim())
                     .style(request.style().trim())
-                    .quality(request.quality().trim())
+                    .quality(null)
                     .inputMode(request.inputMode())
                     .inputArtifactKey(inputKey)
                     .status(AiGenerationStatus.PENDING)
@@ -94,7 +94,7 @@ public class AiGenerationJobService {
         } catch (DataIntegrityViolationException concurrentReplay) {
             deleteInput(inputKey, concurrentReplay);
             AiGenerationJob prior = jobs.findByUser_IdAndIdempotencyKey(ownerId, idempotencyKey).orElse(null);
-            if (prior != null && prior.getRequestHash().equals(hash)) return toResponse(prior);
+            if (prior != null && matchesCreateReplay(prior, request, imageBytes, hash)) return toResponse(prior);
             if (prior != null) throw new AiGenerationException("AI_IDEMPOTENCY_CONFLICT");
             throw concurrentReplay;
         } catch (RuntimeException failure) {
@@ -123,15 +123,15 @@ public class AiGenerationJobService {
         if (source.getStatus() != AiGenerationStatus.FAILED) {
             throw new AiGenerationException("AI_RETRY_NOT_ALLOWED");
         }
-        requireReady();
         synchronized (quotaLock(ownerId)) {
             AiGenerationJob existing = jobs.findByUser_IdAndIdempotencyKey(ownerId, idempotencyKey).orElse(null);
             if (existing != null) {
-                if (!existing.getRequestHash().equals(source.getRequestHash())) {
+                if (!matchesRetryReplay(existing, source)) {
                     throw new AiGenerationException("AI_IDEMPOTENCY_CONFLICT");
                 }
                 return toResponse(existing);
             }
+            requireReady();
             checkAndRecordRateLimit(ownerId);
         }
         AiGenerationJob retry = AiGenerationJob.builder()
@@ -152,7 +152,7 @@ public class AiGenerationJobService {
             return toResponse(jobs.saveAndFlush(retry));
         } catch (DataIntegrityViolationException concurrentReplay) {
             AiGenerationJob existing = jobs.findByUser_IdAndIdempotencyKey(ownerId, idempotencyKey).orElse(null);
-            if (existing != null && existing.getRequestHash().equals(source.getRequestHash())) return toResponse(existing);
+            if (existing != null && matchesRetryReplay(existing, source)) return toResponse(existing);
             if (existing != null) throw new AiGenerationException("AI_IDEMPOTENCY_CONFLICT");
             throw concurrentReplay;
         }
@@ -179,8 +179,7 @@ public class AiGenerationJobService {
     private void validateRequest(CreateAiGenerationRequest request, MultipartFile image, String key) {
         if (request == null || request.prompt() == null || request.prompt().isBlank()
                 || request.prompt().trim().length() > properties.getMaxPromptChars()
-                || request.style() == null || request.style().isBlank() || request.style().trim().length() > 60
-                || request.quality() == null || request.quality().isBlank() || request.quality().trim().length() > 60) {
+                || request.style() == null || request.style().isBlank() || request.style().trim().length() > 60) {
             throw new AiGenerationException("AI_INVALID_REQUEST");
         }
         if (key == null || key.isBlank() || key.length() > 128) {
@@ -221,7 +220,41 @@ public class AiGenerationJobService {
             digest.update((byte) 0);
             digest.update(request.style().trim().getBytes(StandardCharsets.UTF_8));
             digest.update((byte) 0);
-            digest.update(request.quality().trim().getBytes(StandardCharsets.UTF_8));
+            digest.update(request.inputMode().getBytes(StandardCharsets.UTF_8));
+            if (image != null) {
+                digest.update((byte) 0);
+                digest.update(image);
+            }
+            return HexFormat.of().formatHex(digest.digest());
+        } catch (NoSuchAlgorithmException impossible) {
+            throw new IllegalStateException("SHA-256 is unavailable", impossible);
+        }
+    }
+
+    private boolean matchesRequest(AiGenerationJob prior, CreateAiGenerationRequest request, byte[] image, String hash) {
+        if (prior.getRequestHash().equals(hash)) return true;
+        String legacyQuality = prior.getQuality();
+        return legacyQuality != null && prior.getRequestHash().equals(legacyRequestHash(request, legacyQuality, image));
+    }
+
+    private boolean matchesCreateReplay(AiGenerationJob prior, CreateAiGenerationRequest request, byte[] image, String hash) {
+        return prior.getRetryOf() == null && matchesRequest(prior, request, image, hash);
+    }
+
+    private boolean matchesRetryReplay(AiGenerationJob existing, AiGenerationJob source) {
+        return existing.getRetryOf() != null
+                && existing.getRetryOf().getId().equals(source.getId())
+                && existing.getRequestHash().equals(source.getRequestHash());
+    }
+
+    private String legacyRequestHash(CreateAiGenerationRequest request, String quality, byte[] image) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            digest.update(request.prompt().trim().getBytes(StandardCharsets.UTF_8));
+            digest.update((byte) 0);
+            digest.update(request.style().trim().getBytes(StandardCharsets.UTF_8));
+            digest.update((byte) 0);
+            digest.update(quality.trim().getBytes(StandardCharsets.UTF_8));
             digest.update((byte) 0);
             digest.update(request.inputMode().getBytes(StandardCharsets.UTF_8));
             if (image != null) {

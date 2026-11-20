@@ -6,7 +6,6 @@ public record AiGenerationInput(
         UUID jobId,
         String prompt,
         String style,
-        String quality,
         String inputMode,
         String inputArtifactKey) {
 }

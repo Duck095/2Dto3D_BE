@@ -48,7 +48,7 @@ public class AiGenerationWorker {
         String resultKey = null;
         try {
             AiGenerationInput input = new AiGenerationInput(job.getId(), job.getPrompt(), job.getStyle(),
-                    job.getQuality(), job.getInputMode(), job.getInputArtifactKey());
+                    job.getInputMode(), job.getInputArtifactKey());
             AiGenerationOutput output = CompletableFuture.supplyAsync(() -> provider.generate(input, job.getId()))
                     .orTimeout(properties.getProviderTimeoutMillis(), TimeUnit.MILLISECONDS).join();
             ValidatedGlb validated = mediaValidation.validateGlb(output.glbBytes(), "result.glb", "model/gltf-binary");

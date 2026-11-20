@@ -106,6 +106,15 @@ class MediaValidationServiceTest {
     }
 
     @Test
+    void modelValidationKeepsUpstreamGlbAndStlContracts() {
+        MockMultipartFile glb = glb("chair.glb", "model/gltf-binary", "glTF", 2, 12);
+        MockMultipartFile stl = new MockMultipartFile("model", "chair.stl", "application/sla", new byte[12]);
+
+        assertThat(validator.validateModel(glb).format()).isEqualTo("glb");
+        assertThat(validator.validateModel(stl).format()).isEqualTo("stl");
+    }
+
+    @Test
     void rejectsGlbWrongMagicVersionOrDeclaredLength() {
         assertRejectedGlb(glb("chair.glb", "model/gltf-binary", "nope", 2, 12));
         assertRejectedGlb(glb("chair.glb", "model/gltf-binary", "glTF", 1, 12));

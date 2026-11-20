@@ -89,7 +89,7 @@ class AiGenerationControllerSecurityIntegrationTest {
     void missingProviderReturnsStructuredUnavailableAndDoesNotCreateAJob() throws Exception {
         long before = jobs.count();
         MockMultipartFile data = new MockMultipartFile("data", "", "application/json",
-                "{\"prompt\":\"a small lamp\",\"quality\":\"standard\",\"style\":\"modern\",\"inputMode\":\"text\"}"
+                "{\"prompt\":\"a small lamp\",\"style\":\"modern\",\"inputMode\":\"text\"}"
                         .getBytes(java.nio.charset.StandardCharsets.UTF_8));
 
         mvc.perform(multipart("/api/ai-studio/generations").file(data)

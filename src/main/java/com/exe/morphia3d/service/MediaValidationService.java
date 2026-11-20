@@ -60,6 +60,31 @@ public class MediaValidationService {
         return List.copyOf(validated);
     }
 
+    /** Upstream model-upload contract: validate GLB content and retain supported STL uploads. */
+    public ValidatedMedia validateModel(MultipartFile file) {
+        requirePresent(file);
+        if (file.getSize() > properties.getModelMaxBytes()) {
+            throw new MediaValidationException(TOO_LARGE);
+        }
+
+        String modelExtension = extension(file.getOriginalFilename());
+        if ("glb".equals(modelExtension)) {
+            return validateGlb(file);
+        }
+        if (!"stl".equals(modelExtension)) {
+            throw new MediaValidationException(UNSUPPORTED_EXTENSION);
+        }
+
+        String mimeType = normalizedMimeType(file.getContentType());
+        if (!GENERIC_BINARY_MIME_TYPE.equals(mimeType)
+                && !"application/sla".equals(mimeType)
+                && !"text/plain".equals(mimeType)
+                && !mimeType.isEmpty()) {
+            throw new MediaValidationException(UNSUPPORTED_MIME_TYPE);
+        }
+        return new ValidatedMedia(file, MediaKind.MODEL_3D, "stl", file.getSize(), null, null);
+    }
+
     public ValidatedMedia validateGlb(MultipartFile file) {
         requirePresent(file);
         validateGlbMetadata(file.getOriginalFilename(), file.getContentType(), file.getSize());

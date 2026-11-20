@@ -59,7 +59,7 @@ class AiGenerationHttpContractIntegrationTest {
     void testOnlyProviderAcceptsJobAndOwnerReadsThePersistedPendingState() throws Exception {
         String key = "TEST_ONLY-" + UUID.randomUUID();
         MockMultipartFile data = new MockMultipartFile("data", "", "application/json",
-                "{\"prompt\":\"a small lamp\",\"quality\":\"standard\",\"style\":\"modern\",\"inputMode\":\"text\"}"
+                "{\"prompt\":\"a small lamp\",\"style\":\"modern\",\"inputMode\":\"text\"}"
                         .getBytes(java.nio.charset.StandardCharsets.UTF_8));
         UserPrincipal principal = new UserPrincipal(owner);
 
@@ -70,7 +70,8 @@ class AiGenerationHttpContractIntegrationTest {
                 .andExpect(jsonPath("$.errorCode").doesNotExist())
                 .andReturn().getResponse();
         String id = com.jayway.jsonpath.JsonPath.read(response.getContentAsString(), "$.id");
-        assertThat(jobs.findByUser_IdAndIdempotencyKey(owner.getId(), key)).isPresent();
+        var created = jobs.findByUser_IdAndIdempotencyKey(owner.getId(), key).orElseThrow();
+        assertThat(created.getQuality()).isNull();
 
         mvc.perform(get("/api/ai-studio/generations/{id}", id).with(authenticate(principal)))
                 .andExpect(status().isOk())

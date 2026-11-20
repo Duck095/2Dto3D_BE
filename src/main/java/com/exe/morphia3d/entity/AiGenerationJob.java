@@ -57,7 +57,7 @@ public class AiGenerationJob {
     @Column(name = "style", nullable = false, length = 60, updatable = false)
     private String style;
 
-    @Column(name = "quality", nullable = false, length = 60, updatable = false)
+    @Column(name = "quality", length = 60, updatable = false)
     private String quality;
 
     @Column(name = "input_mode", nullable = false, length = 16, updatable = false)

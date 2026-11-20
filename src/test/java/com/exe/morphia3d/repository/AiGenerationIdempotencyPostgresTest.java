@@ -1,9 +1,11 @@
 package com.exe.morphia3d.repository;
 
 import org.flywaydb.core.Flyway;
+import org.flywaydb.core.api.MigrationVersion;
 import org.junit.jupiter.api.Test;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
+import com.exe.morphia3d.test.support.PostgresTestRoleProvisioning;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -26,11 +28,15 @@ class AiGenerationIdempotencyPostgresTest {
     void migrationsAndDatabaseConstraintEnforceOwnerScopedIdempotency() {
         DataSource dataSource = new DriverManagerDataSource(
                 POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword());
-        Flyway flyway = Flyway.configure().dataSource(dataSource).locations("classpath:db/migration")
-                .schemas("public").defaultSchema("public").cleanDisabled(true).load();
-        assertThat(flyway.migrate().migrationsExecuted).isEqualTo(10);
-
         JdbcTemplate jdbc = new JdbcTemplate(dataSource);
+        PostgresTestRoleProvisioning.provisionMigrationRoles(jdbc, POSTGRES.getUsername());
+        Flyway throughV14 = flyway(dataSource, MigrationVersion.fromVersion("14"));
+        assertThat(throughV14.migrate().migrationsExecuted).isEqualTo(14);
+        PostgresTestRoleProvisioning.grantSnapshotReferencePrivileges(jdbc);
+        Flyway flyway = flyway(dataSource, null);
+        assertThat(flyway.migrate().migrationsExecuted).isEqualTo(5);
+        flyway.validate();
+
         Integer firstOwner = insertUser(jdbc, "idem-first");
         Integer secondOwner = insertUser(jdbc, "idem-second");
         UUID firstJob = UUID.randomUUID();
@@ -45,6 +51,13 @@ class AiGenerationIdempotencyPostgresTest {
                  WHERE table_schema = 'public' AND table_name = 'ai_generation_jobs'
                    AND column_name = 'next_attempt_at'
                 """, Integer.class)).isEqualTo(1);
+    }
+
+    private Flyway flyway(DataSource dataSource, MigrationVersion target) {
+        var configuration = Flyway.configure().dataSource(dataSource).locations("classpath:db/migration")
+                .schemas("public").defaultSchema("public").cleanDisabled(true);
+        if (target != null) configuration.target(target);
+        return configuration.load();
     }
 
     private Integer insertUser(JdbcTemplate jdbc, String suffix) {
