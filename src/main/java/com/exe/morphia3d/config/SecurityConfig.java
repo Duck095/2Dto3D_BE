@@ -43,7 +43,11 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         // Cho phép các port Frontend của bạn (Vite thường dùng 5173, Create React App dùng 3000)
-        List<String> allowedOrigins = new ArrayList<>(List.of("http://localhost:3000", "http://localhost:5173"));
+        List<String> allowedOrigins = new ArrayList<>(List.of(
+                "http://localhost:3000",
+                "http://localhost:5173",
+                "https://morphia-3-d-fe.vercel.app"
+        ));
         if (environment.acceptsProfiles(Profiles.of("dev", "test", "local"))) {
             allowedOrigins.add("http://127.0.0.1:3000");
         }
