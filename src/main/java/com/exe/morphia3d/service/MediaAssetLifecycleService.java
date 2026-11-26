@@ -527,7 +527,7 @@ public class MediaAssetLifecycleService {
     }
 
     private String resourceType(MediaKind kind) {
-        return "image";
+        return kind == MediaKind.MODEL_3D ? "raw" : "image";
     }
 
     private String cloudName() {

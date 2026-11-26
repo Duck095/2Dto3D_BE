@@ -248,7 +248,7 @@ public class CloudinaryMediaStorageService implements MediaStorageService {
     }
 
     private String expectedResourceType(MediaKind kind) {
-        return "image";
+        return kind == MediaKind.MODEL_3D ? "raw" : "image";
     }
 
     private boolean isSupportedDeliveryType(String type) {

@@ -23,11 +23,12 @@ public record MediaUploadIntent(long mediaAssetId, UUID operationId, UUID leaseT
 
     public String publicId() {
         String folder = mediaKind == MediaKind.IMAGE ? "images" : "models";
-        return "product-media/" + folder + "/" + operationId + "/" + mediaAssetId;
+        String suffix = mediaKind == MediaKind.MODEL_3D ? ".glb" : "";
+        return "product-media/" + folder + "/" + operationId + "/" + mediaAssetId + suffix;
     }
 
     public String resourceType() {
-        return "image";
+        return mediaKind == MediaKind.MODEL_3D ? "raw" : "image";
     }
 
     public String deliveryType() {
