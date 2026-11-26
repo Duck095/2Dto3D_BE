@@ -165,6 +165,7 @@
     </dependencies>
 
     <build>
+        <directory>${project.basedir}/.mvn-target</directory>
         <plugins>
 
             <plugin>
