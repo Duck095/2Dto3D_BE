@@ -1,0 +1,40 @@
+services:
+  - type: web
+    name: morphia-3d-be
+    env: java
+    region: singapore
+    buildCommand: "./mvnw clean package -DskipTests"
+    startCommand: "java -jar target/morphia-3d-0.0.1-SNAPSHOT.jar"
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: production
+      - key: SPRING_FLYWAY_ENABLED
+        value: "true"
+      - key: SPRING_JPA_HIBERNATE_DDL_AUTO
+        value: "validate"
+      - key: SERVER_PORT
+        value: "8080"
+      - key: JWT_SECRET
+        generateValue: true
+      - key: CLOUD_NAME
+        sync: false
+      - key: API_KEY
+        sync: false
+      - key: API_SECRET
+        sync: false
+      - key: VNPAY_CODE
+        sync: false
+      - key: VNPAY_SECRET
+        sync: false
+      - key: VNPAY_RETURN_URL
+        sync: false
+      - key: MOMO_PARTNER_CODE
+        sync: false
+      - key: MOMO_ACCESS_KEY
+        sync: false
+      - key: MOMO_SECRET_KEY
+        sync: false
+      - key: MOMO_RETURN_URL
+        sync: false
+      - key: MOMO_IPN_URL
+        sync: false
